@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 var Handlers = map[string]func([]Value) Value{
 	"PING": ping,
@@ -32,7 +35,6 @@ func set(args []Value) Value {
 	SETsMu.Lock()
 	SETs[key] = value
 	SETsMu.Unlock()
-
 	return Value{typ: "string", str: "OK"}
 }
 
@@ -50,7 +52,7 @@ func get(args []Value) Value {
 	if !ok {
 		return Value{typ: "null"}
 	}
-
+	fmt.Println("Get - Done")
 	return Value{typ: "bulk", bulk: value}
 }
 

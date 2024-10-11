@@ -32,30 +32,22 @@ func NewResp(rd io.Reader) *Resp {
 }
 
 func (r *Resp) readLine() (line []byte, n int, err error) {
-	fmt.Println("Start of readLine")
 	for {
 		b, err := r.reader.ReadByte()
-		fmt.Println("b=", b, "Ascii")
-		fmt.Printf("b: %c\n", b)
-
 		if err != nil {
 			return nil, 0, err
 		}
 		n += 1
 		line = append(line, b)
-		fmt.Println(string(line), "n= ", n, "\r", line)
-
 		if len(line) >= 2 && line[len(line)-2] == '\r' {
 			break
 		}
 	}
-	fmt.Println("End of readLine\n")
-
 	return line[:len(line)-2], n, nil
 }
 
 func (r *Resp) readInteger() (x int, n int, err error) {
-	fmt.Println("Start of readIntiger")
+
 	line, n, err := r.readLine() //beolvassa az egesz sort, byteonkent
 	if err != nil {
 		return 0, 0, err
@@ -64,26 +56,21 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 	if err != nil {
 		return 0, n, err
 	}
-	fmt.Println("End of readIntiger. i64= ", i64)
 	return int(i64), n, nil
 }
 
 func (r *Resp) Read() (Value, error) {
 	_type, err := r.reader.ReadByte()
-	fmt.Println("Start of Read method")
 
-	fmt.Printf("%c", _type)
 	if err != nil {
 		return Value{}, err
 	}
 
 	switch _type {
 	case ARRAY:
-		println("\nNext: return readArray")
 		return r.readArray()
 
 	case BULK:
-		println("\nNext: return readBulk")
 		return r.readBulk()
 	default:
 		fmt.Printf("Unknown type: %v", string(_type))
@@ -94,7 +81,6 @@ func (r *Resp) Read() (Value, error) {
 func (r *Resp) readArray() (Value, error) {
 	v := Value{}
 	v.typ = "array"
-	fmt.Println(v.typ, "\n")
 
 	// read length of array
 	len, _, err := r.readInteger()
@@ -105,9 +91,7 @@ func (r *Resp) readArray() (Value, error) {
 	// foreach line, parse and read the value
 	v.array = make([]Value, 0)
 	for i := 0; i < len; i++ {
-		fmt.Println("AAAAAA To Read ", i, "-jara   AAAAAAAA")
 		val, err := r.Read()
-		fmt.Println("val:", val)
 		if err != nil {
 			return v, err
 		}
@@ -115,7 +99,6 @@ func (r *Resp) readArray() (Value, error) {
 		// append parsed value to array
 		v.array = append(v.array, val)
 	}
-	fmt.Println("v.array = ", v.array)
 
 	return v, nil
 }
@@ -135,7 +118,6 @@ func (r *Resp) readBulk() (Value, error) {
 	r.reader.Read(bulk)
 
 	v.bulk = string(bulk)
-	fmt.Println(v.bulk, "- In the readBulk")
 
 	// Read the trailing CRLF
 	r.readLine()
@@ -216,7 +198,9 @@ func NewWriter(w io.Writer) *Writer {
 }
 
 func (w *Writer) Write(v Value) error {
+	fmt.Println("writeren belul. v= ", v)
 	var bytes = v.Marshal()
+	fmt.Printf("Writen belul, bytes= %c", bytes)
 
 	_, err := w.writer.Write(bytes)
 	if err != nil {

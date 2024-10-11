@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -57,4 +59,27 @@ func (aof *Aof) Write(value Value) error {
 	}
 
 	return nil
+}
+
+func (aof *Aof) Read(resp *Resp) {
+	origReader := resp.reader
+	resp.reader = aof.rd
+	defer func() { resp.reader = origReader }()
+
+	for {
+		value, err := resp.Read()
+		if err != nil {
+			fmt.Println(aof.file.Name(), " restored")
+			return
+		}
+		command := strings.ToUpper(value.array[0].bulk)
+		args := value.array[1:]
+
+		handler, ok := Handlers[command]
+		if !ok {
+			fmt.Println("Invalid command in aof file: ", command)
+		}
+		handler(args)
+	}
+
 }
