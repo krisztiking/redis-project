@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"strings"
+
+	myResp "github.com/krisztiking/go-module-test"
 )
 
 func main() {
@@ -33,7 +35,7 @@ func main() {
 
 	defer conn.Close()
 
-	resp := NewResp(conn)
+	resp := myResp.NewResp(conn)
 	aof.Read(resp)
 	for {
 		value, err := resp.Read()
@@ -43,26 +45,27 @@ func main() {
 			return
 		}
 
-		if value.typ != "array" {
+		if value.Typ != "array" {
 			fmt.Println("Incorrect request, expected array")
 			continue
 		}
 
-		if len(value.array) == 0 {
+		if len(value.Array) == 0 {
 			fmt.Println("Incorrect request, expected non-empty array")
 			continue
 		}
 
-		command := strings.ToUpper(value.array[0].bulk)
-		args := value.array[1:]
+		command := strings.ToUpper(value.Array[0].Bulk)
+		args := value.Array[1:]
 
 		fmt.Println("Command: ", command, " Args: ", args)
 
-		writer := NewWriter(conn)
-		handler, ok := Handlers[command]
+		//writer := NewWriter(conn)
+		writer := myResp.NewWriter(conn)
+		handler, ok := myResp.Handlers[command]
 		if !ok {
 			fmt.Println("Unknown command: ", command)
-			writer.Write(Value{typ: "error", str: "ERR unknown command"})
+			writer.Write(myResp.Value{Typ: "error", Str: "ERR unknown command"})
 			continue
 		}
 		result := handler(args)
@@ -74,6 +77,5 @@ func main() {
 		if command == "SET" || command == "HSET" {
 			aof.Write(value)
 		}
-
 	}
 }
