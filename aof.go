@@ -68,6 +68,7 @@ func (aof *Aof) Read(resp *myResp.Resp) {
 	resp.Reader = aof.rd
 	defer func() { resp.Reader = origReader }()
 
+	var wg sync.WaitGroup
 	for {
 		value, err := resp.Read()
 		if err != nil {
@@ -77,11 +78,15 @@ func (aof *Aof) Read(resp *myResp.Resp) {
 		command := strings.ToUpper(value.Array[0].Bulk)
 		args := value.Array[1:]
 
-		handler, ok := myResp.Handlers[command]
-		if !ok {
-			fmt.Println("Invalid command in aof file: ", command)
-		}
-		handler(args)
-	}
+		wg.Add(1)
+		go func(cmd string, arguments []myResp.Value) {
+			defer wg.Done()
+			handler, ok := myResp.Handlers[cmd]
+			if !ok {
+				fmt.Println("Invalid command in aof file: ", cmd)
+			}
+			handler(arguments)
+		}(command, args)
 
+	}
 }
